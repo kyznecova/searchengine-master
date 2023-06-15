@@ -10,6 +10,7 @@ import searchengine.model.SiteEntity;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -54,13 +55,16 @@ public class SiteMapCreator extends RecursiveAction /*RecursiveTask<String> */{
                     .userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
                     .referrer("https://www.google.com");
             Document document = connection.get();
-            PageEntity page = new PageEntity();
-            page.setSiteId(site);
-//          page.setSiteId(site.getId());
-            page.setPath(url);
-            page.setContent(String.valueOf(document));
-            page.setCode(connection.response().statusCode());
-            pageRepository.save(page);
+            String newUrl = url.substring(site.getUrl().length());
+            if ( newUrl.length() > 0) {
+                PageEntity page = new PageEntity();
+                page.setSiteId(site);
+                page.setPath(newUrl);
+                page.setContent(String.valueOf(document));
+                page.setCode(connection.response().statusCode());
+                pageRepository.save(page);
+            }
+
 
 
             Elements elements = document.select("a");
