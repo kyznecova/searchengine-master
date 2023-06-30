@@ -20,22 +20,13 @@ public class IndexEntity {
     @Column(nullable = false)
     private int id;
 
-   /* @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(referencedColumnName = "page_id", name = "page_id")
-    private PageEntity pageId;*/
-    @Column(name = "page_id")
-    private int pageId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(referencedColumnName = "id", name = "page_id")
+    private PageEntity pageId;
 
-   /* @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(referencedColumnName = "lemma_id", name = "lemma_id")
-    private LemmaEntity lemmaId;*/
-   @Column(name = "lemma_id")
-    private int lemmaId;
-
-    /*@Column(name = "page_id", insertable = false, updatable = false)
-    private int pageID;
-    @Column(name = "lemma_id", insertable = false, updatable = false)
-    private int lemmaID;*/
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(referencedColumnName = "id", name = "lemma_id")
+    private LemmaEntity lemmaId;
 
     @Column(name = "lemma_rank", nullable = false)
     private float rank;

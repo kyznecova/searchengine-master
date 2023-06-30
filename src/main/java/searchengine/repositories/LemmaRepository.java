@@ -6,6 +6,9 @@ import searchengine.model.LemmaEntity;
 
 import java.util.ArrayList;
 
+
 @Repository
 public interface LemmaRepository extends JpaRepository<LemmaEntity, Integer> {
+    ArrayList<LemmaEntity> findLemmaEntitiesByLemmaEqualsIgnoreCase (String lemma);
+
 }

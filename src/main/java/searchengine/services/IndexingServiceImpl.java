@@ -7,32 +7,31 @@ import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
 import searchengine.model.SiteEntity;
 import searchengine.model.StatusType;
+import searchengine.repositories.IndexRepository;
+import searchengine.repositories.LemmaRepository;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 
 @Service
 @RequiredArgsConstructor
-public class IndexingServiceImpl implements IndexingService{
+public class IndexingServiceImpl implements IndexingService {
     private boolean indexingStarted;
     private final SitesList sites;
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
+    private final LemmaRepository lemmaRepository;
+    private final IndexRepository indexRepository;
     private SiteEntity siteEntity;
     private ForkJoinPool forkJoinPool;
+    private boolean isContainsSite;
 
     @Override
     public IndexingResponse startIndexing() {
-        if (indexingStarted){
+        if (indexingStarted) {
             return new IndexingResponse(false, "Индексация уже запущена");
         } else {
             indexingStarted = true;
@@ -40,6 +39,8 @@ public class IndexingServiceImpl implements IndexingService{
 
         pageRepository.deleteAll();
         siteRepository.deleteAll();
+        lemmaRepository.deleteAll();
+        indexRepository.deleteAll();
 
         for (Site site : sites.getSites()) {
             SiteEntity siteEntity = new SiteEntity();
@@ -54,7 +55,9 @@ public class IndexingServiceImpl implements IndexingService{
                     site.getUrl(),
                     siteEntity,
                     pageRepository,
-                    siteRepository);
+                    siteRepository,
+                    lemmaRepository,
+                    indexRepository);
             forkJoinPool.execute(siteMapCreator);
             forkJoinPool.shutdown();
 
@@ -88,6 +91,45 @@ public class IndexingServiceImpl implements IndexingService{
 
     @Override
     public IndexingResponse indexPage(String url) {
+        isContainsSite = false;
+        Site indexingSite = new Site();
+        for (Site site : sites.getSites()) {
+            if (url.contains(site.getUrl())) {
+                isContainsSite = true;
+                indexingSite = site;
+                break;
+            }
+        }
+
+        if (!isContainsSite) {
+            return new IndexingResponse(false, "Данная страница находится за пределами сайтов," +
+                    " указанных в конфигурационном файле");
+        } else {
+            for (SiteEntity site : siteRepository.findAll()) {
+                if (site.getName().equals(indexingSite.getName())) {
+                    siteEntity = site;
+                    System.out.println("Сайт был найден в репозитории. Запущена переиндексация страницы");
+                    break;
+                } else {
+                    System.out.println("Сайт не был найден в репозитории. Создается новый объект");
+                    siteEntity = new SiteEntity();
+                    siteEntity.setUrl(indexingSite.getUrl());
+                    siteEntity.setName(indexingSite.getName());
+                    siteEntity.setStatus(StatusType.INDEXING);
+                    siteEntity.setStatusTime(LocalDateTime.now());
+                    siteRepository.save(siteEntity);
+                }
+                PageMapCreator pageParser = new PageMapCreator(
+                        url,
+                        siteEntity,
+                        pageRepository,
+                        siteRepository,
+                        lemmaRepository,
+                        indexRepository);
+                pageParser.parsePage();
+                return new IndexingResponse(true);
+            }
+        }
         return null;
     }
 }

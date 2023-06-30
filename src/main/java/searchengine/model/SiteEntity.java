@@ -34,6 +34,8 @@ public class SiteEntity {
     private String name;
     @OneToMany(mappedBy = "siteId")
     private Set<PageEntity> pages = new HashSet<>();
+    @OneToMany(mappedBy = "siteId")
+    private Set<LemmaEntity> lemmas = new HashSet<>();
 
 
 

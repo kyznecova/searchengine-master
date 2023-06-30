@@ -7,6 +7,8 @@ import searchengine.config.Site;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -21,13 +23,16 @@ public class PageEntity{
     private int id;
     @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn (name = "site_id", referencedColumnName = "id", nullable = false)
-//    @Column(name = "site_id")
-    private SiteEntity/*int*/ siteId;
+    private SiteEntity siteId;
     @Column(columnDefinition = "VARCHAR(768) CHARACTER SET utf8", nullable = false)
     private String path;
     @Column(nullable = false)
     private int code;
     @Column(columnDefinition = "MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci", nullable = false)
     private String content;
+
+    @OneToMany(mappedBy = "pageId")
+    private Set<IndexEntity> indexes = new HashSet<>();
+
 
 }

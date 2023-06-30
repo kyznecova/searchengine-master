@@ -7,5 +7,7 @@ import searchengine.model.SiteEntity;
 @Transactional
 @Repository
 public interface SiteRepository extends JpaRepository<SiteEntity, Integer> {
+    SiteEntity findByUrl(String url);
+    SiteEntity findSiteEntityByUrlIsIgnoreCase(String url);
 
 }

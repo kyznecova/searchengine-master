@@ -8,27 +8,15 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.*;
 
-//@Component
 @Slf4j
+@Component
 public class LemmaFinder {
 
-    private final LuceneMorphology luceneMorphology/* = new RussianLuceneMorphology()*/;
+    private final LuceneMorphology luceneMorphology = new RussianLuceneMorphology();
     private static final String WORD_TYPE_REGEX = "\\W\\w&&[^а-яА-Я\\s]";
     private static final String[] particlesNames = new String[]{"МЕЖД", "ПРЕДЛ", "СОЮЗ"};
 
-
-
-    public static LemmaFinder getInstance() throws IOException {
-        LuceneMorphology morphology= new RussianLuceneMorphology();
-        return new LemmaFinder(morphology);
-    }
-
-    private LemmaFinder(LuceneMorphology luceneMorphology) {
-        this.luceneMorphology = luceneMorphology;
-    }
-
-    LemmaFinder(){
-        throw new RuntimeException("Disallow construct");
+    public LemmaFinder() throws IOException {
     }
 
     public Map<String, Integer> collectLemmas(String text) {
