@@ -8,8 +8,6 @@ import searchengine.dto.statistics.DetailedStatisticsItem;
 import searchengine.dto.statistics.StatisticsData;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.dto.statistics.TotalStatistics;
-import searchengine.model.LemmaEntity;
-import searchengine.model.PageEntity;
 import searchengine.model.SiteEntity;
 import searchengine.model.StatusType;
 import searchengine.repositories.LemmaRepository;
@@ -30,14 +28,17 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final LemmaRepository lemmaRepository;
 
 
-
     @Override
     public StatisticsResponse getStatistics() {
         TotalStatistics total = new TotalStatistics();
         total.setSites(sites.getSites().size());
         total.setIndexing(true);
+        int totalPages = 0;
+        int totalLemmas = 0;
+
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
         List<Site> sitesList = sites.getSites();
+
         for (int i = 0; i < sitesList.size(); i++) {
             Site site = sitesList.get(i);
             DetailedStatisticsItem item = new DetailedStatisticsItem();
@@ -45,20 +46,11 @@ public class StatisticsServiceImpl implements StatisticsService {
             item.setUrl(site.getUrl());
             SiteEntity siteEntity = siteRepository.findByUrl(site.getUrl());
             if (siteEntity != null && siteEntity.getStatus().equals(StatusType.INDEXED)) {
-                int pages = 0;
-                int lemmas = 0;
-                List<PageEntity> pageEntityList = pageRepository.findAll();
-                for (PageEntity page : pageEntityList) {
-                    if (page.getSiteId().getId() == siteEntity.getId()) {
-                        pages++;
-                    }
-                }
-                List<LemmaEntity> lemmaEntityList = lemmaRepository.findAll();
-                for (LemmaEntity lemma : lemmaEntityList) {
-                    if (lemma.getSiteId().getId() == siteEntity.getId()) {
-                        lemmas++;
-                    }
-                }
+                int pages = pageRepository.countBySiteId(siteEntity);
+                int lemmas = lemmaRepository.countBySiteId(siteEntity);
+                totalPages += pages;
+                totalLemmas += lemmas;
+
                 item.setPages(pages);
                 item.setLemmas(lemmas);
                 item.setStatus(String.valueOf(siteEntity.getStatus()));
@@ -66,8 +58,10 @@ public class StatisticsServiceImpl implements StatisticsService {
                 long date = (ZonedDateTime.of(siteEntity.getStatusTime(), ZoneId.systemDefault()))
                         .toInstant().toEpochMilli();
                 item.setStatusTime(date);
-                total.setPages(total.getPages() + pages);
-                total.setLemmas(total.getLemmas() + lemmas);
+
+                total.setPages(totalPages);
+                total.setLemmas(totalLemmas);
+
             }
             detailed.add(item);
         }
