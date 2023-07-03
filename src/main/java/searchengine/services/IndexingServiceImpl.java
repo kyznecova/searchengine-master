@@ -19,7 +19,7 @@ import java.util.concurrent.ForkJoinPool;
 @Service
 @RequiredArgsConstructor
 public class IndexingServiceImpl implements IndexingService {
-    private boolean indexingStarted;
+    private volatile boolean indexingStarted;
     private final SitesList sites;
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
@@ -43,6 +43,11 @@ public class IndexingServiceImpl implements IndexingService {
         indexRepository.deleteAll();
 
         for (Site site : sites.getSites()) {
+            if (!indexingStarted) {
+                forkJoinPool.shutdown();
+                break;
+            }
+
             SiteEntity siteEntity = new SiteEntity();
             siteEntity.setName(site.getName());
             siteEntity.setUrl(site.getUrl());
@@ -71,11 +76,8 @@ public class IndexingServiceImpl implements IndexingService {
 
     @Override
     public IndexingResponse stopIndexing() {
-        if (!indexingStarted) {
-            return new IndexingResponse(false, "Индексация не запущена");
-        } else {
-            indexingStarted = false;
-        }
+        indexingStarted = false;
+
         forkJoinPool.shutdownNow();
         List<SiteEntity> siteList = siteRepository.findAll();
         for (SiteEntity site : siteList) {
